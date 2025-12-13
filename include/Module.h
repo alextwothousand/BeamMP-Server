@@ -35,8 +35,13 @@
 #ifndef BEAMMP_MODULE_H
 #define BEAMMP_MODULE_H
 
-const char* MODULE_LOAD_SYM = "mp_module_load"; // bool mp_module_load(ModuleInfo* info, lua_State* state);
-const char* MODULE_UNLOAD_SYM = "mp_module_unload"; // void mp_module_unload();
+#include <cstdbool>
+
+const char* MODULE_LOAD_SYM = "bmp_module_load"; // bool bmp_module_load(ModuleInfo* info, lua_State* state);
+const char* MODULE_UNLOAD_SYM = "bmp_module_unload"; // void bmp_module_unload();
+
+typedef bool (*bmp_module_load_t)(ModuleInfo*, void*);
+typedef void (*bmp_module_unload_t)(void);
 
 struct ModuleVersion {
     uint major;
@@ -47,7 +52,90 @@ struct ModuleVersion {
 struct ModuleInfo {
     const char* name;
     const char* author;
+    const char* path;
     ModuleVersion version;
+};
+
+// Global defintions
+struct Error {
+    bool ok;
+    const char* error;
+};
+
+// Global functions
+typedef void (*bmp_print_t)(...);
+typedef void (*bmp_printRaw_t)(...);
+typedef void (*bmp_exit_t)(void);
+
+// MP functions
+// TODO: provide 1:1 api coverage
+typedef ModuleVersion ServerVersion;
+
+typedef const char* (*bmp_mp_getosname_t)(void);
+typedef ServerVersion (*bmp_mp_getserverversion_t)(void);
+typedef void (*bmp_mp_registerevent_t)(const char*, const char*);
+
+typedef void (*bmp_mp_triggerglobalevent_t)(const char*, ...); // TODO: confirm signature
+typedef void (*bmp_mp_triggerlocalevent_t)(const char*, ...); // TODO: confirm signature
+
+typedef Error (*bmp_mp_triggerclientevent_t)(uint, const char*, void*); // TODO: confirm signature
+typedef Error (*bmp_mp_triggerclienteventjson_t)(uint, const char*, void*); // TODO: confirm signature
+
+typedef size_t (*bmp_mp_getplayercount_t)(void);
+typedef bool (*bmp_mp_isplayerconnected_t)(uint);
+
+typedef uint (*bmp_mp_getplayeridbyname_t)(const char*);
+typedef const char* (*bmp_mp_getplayername_t)(uint);
+
+typedef Error (*bmp_mp_removevehicle_t)(uint, uint);
+typedef void* (*bmp_mp_getplayervehicles_t)(uint); // TODO: need to re-impl sol::table class
+
+typedef void* (*bmp_mp_getpositionraw_t)(uint, uint); // TODO: confirm signature
+typedef Error (*bmp_mp_sendchatmessage_t)(uint, uint);
+
+// Util functions
+typedef void* (*bmp_util_logdebug_t)(...);
+typedef void* (*bmp_util_loginfo_t)(...);
+
+typedef void* (*bmp_util_logwarn_t)(...);
+typedef void* (*bmp_util_logerror_t)(...);
+
+// Structs containing all functions
+struct MpFunctions {
+    bmp_mp_getosname_t get_os_name;
+    bmp_mp_getserverversion_t get_server_version;
+    bmp_mp_registerevent_t register_event;
+    
+    bmp_mp_triggerglobalevent_t trigger_global_event;
+    bmp_mp_triggerlocalevent_t trigger_local_event;
+    
+    bmp_mp_triggerclientevent_t trigger_client_event;
+    bmp_mp_triggerclienteventjson_t trigger_client_event_json;
+    
+    bmp_mp_getplayercount_t get_player_count;
+    bmp_mp_isplayerconnected_t is_player_connected;
+    
+    bmp_mp_getplayeridbyname_t get_player_id_by_name;
+    bmp_mp_getplayername_t get_player_name;
+    
+    bmp_mp_removevehicle_t remove_vehicle;
+    bmp_mp_getplayervehicles_t get_player_vehicles;
+    
+    bmp_mp_getpositionraw_t get_position_raw;
+    bmp_mp_sendchatmessage_t send_chat_message;
+};
+
+struct UtilFunctions {
+    bmp_util_logdebug_t log_debug;
+    bmp_util_loginfo_t log_info;
+
+    bmp_util_logwarn_t log_warn;
+    bmp_util_logerror_t log_error;
+};
+
+struct ModuleFunctions {
+    MpFunctions mp;
+    UtilFunctions util;
 };
 
 #ifdef __cplusplus
